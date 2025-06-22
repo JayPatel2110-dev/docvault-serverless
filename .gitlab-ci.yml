@@ -33,7 +33,7 @@ apply:
     - cd ../lambda
     - zip -r lambda_function.zip .
     - cd ../$TF_ROOT
-    - terraform apply -auto-approve tfplan
+    - terraform apply -auto-approve 
     - export API_URL=$(terraform output -raw api_base_url)
     - sed -i "s|%%API_URL%%|$API_URL|g" ../frontend/index.html
     - sed -i "s|%%API_URL%%|$API_URL|g" ../frontend/register.html
