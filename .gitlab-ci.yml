@@ -15,7 +15,6 @@ default:
 validate:
   stage: validate
   script:
-    - cd terraform
     - terraform init
     - terraform validate
 
@@ -34,7 +33,7 @@ apply:
   script:
     - cd lambda
     - zip -r lambda_function.zip .
-    - cd ../terraform
+    - cd ..terraform
     - terraform init
     - terraform apply -auto-approve tfplan
     - sed -i "s|%%API_URL%%|$API_URL|g" frontend/index.html
