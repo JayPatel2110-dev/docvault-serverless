@@ -37,7 +37,6 @@ apply:
     - cd ../$TF_ROOT
     - terraform apply -auto-approve tfplan
     - export API_URL=$(terraform output -raw api_base_url)
-    - echo "Using API URL: $API_URL"
     - sed -i "s|%%API_URL%%|$API_URL|g" ../frontend/index.html
     - sed -i "s|%%API_URL%%|$API_URL|g" ../frontend/register.html
     - sed -i "s|%%API_URL%%|$API_URL|g" ../frontend/dashboard.html
