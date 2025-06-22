@@ -56,3 +56,16 @@ resource "aws_s3_object" "website_files" {
   }, split(".", each.value)[length(split(".", each.value)) - 1],
   "application/octet-stream")
 }
+
+resource "aws_s3_bucket_cors_configuration" "doc_vault_cors" {
+    bucket = aws_s3_bucket.doc_vault.id
+
+    cors_rule {
+        allowed_methods = ["GET", "POST", "PUT", "DELETE"]
+        allowed_origins = ["*"] # Change to your actual frontend URL in production
+        allowed_headers = ["*"]
+        expose_headers  = ["ETag"]
+        max_age_seconds = 3000
+    }
+  
+}
