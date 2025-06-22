@@ -4,5 +4,6 @@ output "s3_website_url" {
 }
 
 output "api_base_url" {
-  value = "https://${aws_api_gateway_rest_api.docvault_api.id}.execute-api.${var.region}.amazonaws.com/prod"
+  description = "Base URL of the API Gateway"
+  value       = aws_apigatewayv2_api.doc_vault_api.api_endpoint
 }

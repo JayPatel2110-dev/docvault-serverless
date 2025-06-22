@@ -41,6 +41,7 @@ resource "aws_s3_bucket_policy" "doc_vault_policy" {
 resource "aws_s3_object" "website_files" {
   for_each = fileset("${path.module}/../frontend/public", "**")
   bucket = var.s3_bucket_name
+  depends_on = [ aws_s3_bucket.doc_vault ]
   key    = "public/${each.value}"
   source = "${path.module}/../frontend/public/${each.value}"
   etag   = filemd5("${path.module}/../frontend/public/${each.value}")

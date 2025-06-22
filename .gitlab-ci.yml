@@ -22,6 +22,10 @@ plan:
     - zip -r lambda_function.zip .
     - cd ../$TF_ROOT
     - terraform plan -out=tfplan -input=false
+  artifacts:
+    paths:
+      - tfplan
+      - api_url.txt
 
 apply:
   stage: apply

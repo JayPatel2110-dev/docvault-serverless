@@ -3,7 +3,7 @@ resource "aws_lambda_function" "doc_vault_lambda" {
   role          = aws_iam_role.lambda_exec.arn
   handler       = "lambda_function.handler"
   runtime       = "python3.10"
-
+  depends_on = [ aws_iam_role.lambda_exec ]
   source_code_hash = filebase64sha256("${path.module}/../lambda/lambda_function.zip")
   filename         = "${path.module}/../lambda/lambda_function.zip"
 
