@@ -52,5 +52,6 @@ resource "aws_s3_object" "website_files" {
     jpg  = "image/jpeg"
     jpeg = "image/jpeg"
     svg  = "image/svg+xml"
-  }, split(".", each.value)[-1], "application/octet-stream")
+  }, split(".", each.value)[length(split(".", each.value)) - 1],
+  "application/octet-stream")
 }
