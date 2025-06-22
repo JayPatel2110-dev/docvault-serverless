@@ -32,7 +32,7 @@ resource "aws_s3_bucket_policy" "doc_vault_policy" {
                 Effect = "Allow"
                 Principal = "*"
                 Action = "s3:GetObject"
-                Resource = "${aws_s3_bucket.doc_vault.arn}/public/*"
+                Resource = "${aws_s3_bucket.doc_vault.arn}/frontend/public/*"
             }
         ]
     })
@@ -42,7 +42,7 @@ resource "aws_s3_object" "website_files" {
   for_each = fileset("${path.module}/../frontend/public", "**")
   bucket = var.s3_bucket_name
   depends_on = [ aws_s3_bucket.doc_vault ]
-  key    = "public/${each.value}"
+  key    = each.value
   source = "${path.module}/../frontend/public/${each.value}"
   etag   = filemd5("${path.module}/../frontend/public/${each.value}")
   content_type = lookup({
