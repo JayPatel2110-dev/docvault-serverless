@@ -21,7 +21,7 @@ plan:
     - cd ../lambda
     - zip -r lambda_function.zip .
     - cd ../$TF_ROOT
-    - terraform plan -out=tfplan
+    - terraform plan -out=tfplan -input=false
 
 apply:
   stage: apply
