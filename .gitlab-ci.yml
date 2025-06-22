@@ -1,5 +1,4 @@
 stages:
-  - validate
   - plan
   - apply
 
@@ -15,11 +14,6 @@ default:
     - apk add --no-cache bash curl jq zip aws-cli
     - cd $TF_ROOT
     - terraform init -input=false
-
-validate:
-  stage: validate
-  script:
-    - terraform validate
 
 plan:
   stage: plan

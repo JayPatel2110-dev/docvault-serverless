@@ -28,7 +28,7 @@ resource "aws_api_gateway_integration" "proxy_integration" {
 resource "aws_lambda_permission" "allow_apigw" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.docvault_lambda.function_name
+  function_name = aws_lambda_function.doc_vault_lambda.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.docvault_api.execution_arn}/*/*/*"
 }
