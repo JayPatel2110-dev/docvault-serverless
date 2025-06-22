@@ -3,44 +3,46 @@ stages:
   - plan
   - apply
 
+variables:
+  TF_ROOT: terraform
+  AWS_REGION: ap-south-1
+
 default:
   image:
     name: hashicorp/terraform:latest
     entrypoint: [""]
   before_script:
-    - apk add --no-cache bash curl jq aws-cli
+    - apk add --no-cache bash curl jq zip aws-cli
     - cd $TF_ROOT
     - terraform init -input=false
 
 validate:
   stage: validate
   script:
-    - terraform init
     - terraform validate
 
 plan:
   stage: plan
   script:
-    - cd lambda
+    - cd ../lambda
     - zip -r lambda_function.zip .
-    - cd ../terraform
-    - cd terraform
-    - terraform init
+    - cd ../$TF_ROOT
     - terraform plan -out=tfplan
 
 apply:
-  stage: apply 
+  stage: apply
   script:
-    - cd lambda
+    - cd ../lambda
     - zip -r lambda_function.zip .
-    - cd ..terraform
-    - terraform init
+    - cd ../$TF_ROOT
     - terraform apply -auto-approve tfplan
-    - sed -i "s|%%API_URL%%|$API_URL|g" frontend/index.html
-    - sed -i "s|%%API_URL%%|$API_URL|g" frontend/register.html
-    - sed -i "s|%%API_URL%%|$API_URL|g" frontend/dashboard.html
-    - aws s3 cp frontend/index.html s3://$TF_VAR_bucket_name/index.html --content-type "text/html"
-    - aws s3 cp frontend/register.html s3://$TF_VAR_bucket_name/register.html --content-type "text/html"
-    - aws s3 cp frontend/dashboard.html s3://$TF_VAR_bucket_name/dashboard.html --content-type "text/html"
-    - aws s3 sync frontend/ s3://$TF_VAR_bucket_name/ --exclude "*.html"
+    - export API_URL=$(terraform output -raw api_base_url)
+    - echo "Using API URL: $API_URL"
+    - sed -i "s|%%API_URL%%|$API_URL|g" ../frontend/index.html
+    - sed -i "s|%%API_URL%%|$API_URL|g" ../frontend/register.html
+    - sed -i "s|%%API_URL%%|$API_URL|g" ../frontend/dashboard.html
+    - aws s3 cp ../frontend/index.html s3://$TF_VAR_bucket_name/index.html --content-type "text/html"
+    - aws s3 cp ../frontend/register.html s3://$TF_VAR_bucket_name/register.html --content-type "text/html"
+    - aws s3 cp ../frontend/dashboard.html s3://$TF_VAR_bucket_name/dashboard.html --content-type "text/html"
+    - aws s3 sync ../frontend/ s3://$TF_VAR_bucket_name/ --exclude "*.html" --acl public-read
   when: manual
