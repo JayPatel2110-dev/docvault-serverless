@@ -18,11 +18,6 @@ debug.log
 .DS_Store
 Thumbs.db
 
-# === Node/npm (if ever used for frontend scripts) ===
-node_modules/
-package-lock.json
-dist/
-
 # === Python virtualenv (optional) ===
 .venv/
 env/

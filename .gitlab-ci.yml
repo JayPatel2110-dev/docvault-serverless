@@ -3,10 +3,17 @@ stages:
   - plan
   - apply
 
+default:
+  image:
+    name: hashicorp/terraform:latest
+    entrypoint: [""]
+  before_script:
+    - apk add --no-cache bash curl jq aws-cli
+    - cd $TF_ROOT
+    - terraform init -input=false
+
 validate:
   stage: validate
-  image: hashicorp/terraform:latest
-  entrypoint: [""]
   script:
     - cd terraform
     - terraform init
@@ -14,8 +21,6 @@ validate:
 
 plan:
   stage: plan
-  image: hashicorp/terraform:latest
-  entrypoint: [""]
   script:
     - cd lambda
     - zip -r lambda_function.zip .
@@ -26,8 +31,6 @@ plan:
 
 apply:
   stage: apply 
-  image: hashicorp/terraform:latest
-  entrypoint: [""]
   script:
     - cd lambda
     - zip -r lambda_function.zip .
