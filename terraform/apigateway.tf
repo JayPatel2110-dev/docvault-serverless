@@ -22,7 +22,7 @@ resource "aws_api_gateway_integration" "proxy_integration" {
   http_method = aws_api_gateway_method.proxy_method.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.docvault_lambda.invoke_arn
+  uri                     = aws_lambda_function.doc_vault_lambda.invoke_arn
 }
 
 resource "aws_lambda_permission" "allow_apigw" {
