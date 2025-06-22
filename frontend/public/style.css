@@ -1,0 +1,99 @@
+/* Modern Dark Theme for Login/Register */
+
+:root {
+  --bg: #121212;
+  --card: #1e1e1e;
+  --accent: #fca311;
+  --accent-hover: #ffb74d;
+  --input-bg: #2a2a2a;
+  --text: #f1f1f1;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.container {
+  background-color: var(--card);
+  padding: 2.5rem 2rem;
+  border-radius: 16px;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+  width: 90%;
+  max-width: 400px;
+  animation: slideFadeIn 0.6s ease-out;
+}
+
+@keyframes slideFadeIn {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: var(--accent);
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+input[type="text"],
+input[type="password"] {
+  padding: 0.9rem;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--input-bg);
+  color: white;
+  font-size: 1rem;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+  outline: 2px solid var(--accent);
+}
+
+button {
+  padding: 0.9rem;
+  background-color: var(--accent);
+  color: black;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: var(--accent-hover);
+}
+
+p {
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}

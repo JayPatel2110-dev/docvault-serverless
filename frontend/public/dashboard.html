@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>DocVault Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="dashboard.css">
+  <script src="https://unpkg.com/feather-icons"></script>
+</head>
+
+<body>
+  <div class="dashboard">
+    <header>
+      <h1>DocVault</h1>
+      <div class="actions">
+        <button id="uploadBtn"><i data-feather="upload-cloud"></i> Upload</button>
+        <a href="index.html" class="logout"><i data-feather="log-out"></i> Logout</a>
+      </div>
+    </header>
+
+    <main>
+      <h2>Your Documents</h2>
+      <div id="docGrid" class="doc-grid"></div>
+    </main>
+
+    <footer>
+      <p>© 2025 DocVault. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <script>
+    const token = localStorage.getItem("token");
+    const API_BASE = "%%API_URL%%"
+
+    if (!token) {
+      alert("Please log in first");
+      window.location.href = "index.html";
+    }
+
+    const docContainer = document.getElementById("doc-container");
+
+    async function loadDocuments() {
+      const res = await fetch(`${API_BASE}/list-files`, {
+        headers: { Authorization: "Bearer " + token },
+      });
+
+      const files = await res.json();
+      docContainer.innerHTML = "";
+
+      files.forEach(file => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (["png", "jpg", "jpeg", "gif", "bmp", "webp"].includes(ext)) {
+          card.innerHTML = `<img src="${file.url}" alt="${file.name}" />`;
+        } else if (ext === "pdf") {
+          card.innerHTML = `<iframe src="${file.url}" type="application/pdf"></iframe>`;
+        } else {
+          card.innerHTML = `<p>${file.name}</p><a href="${file.url}" target="_blank">Download</a>`;
+        }
+
+        docContainer.appendChild(card);
+      });
+    }
+
+    document.getElementById("upload-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fileInput = document.getElementById("file");
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      try {
+        // Step 1: Request signed upload URL
+        const urlRes = await fetch(`${API_BASE}/get-upload-url`, {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ filename: file.name })
+        });
+
+        const { url } = await urlRes.json();
+
+        // Step 2: Upload file directly to S3
+        await fetch(url, {
+          method: "PUT",
+          body: file
+        });
+
+        alert("Upload successful!");
+        fileInput.value = "";
+        loadDocuments();
+      } catch (err) {
+        console.error(err);
+        alert("Upload failed.");
+      }
+    });
+
+    loadDocuments();
+  </script>
+</body>
+
+</html>
