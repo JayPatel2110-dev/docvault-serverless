@@ -17,6 +17,7 @@ exports.handler = async (event) => {
   if (path === "/login" && method === "POST") return login(event);
   if (path === "/list-files" && method === "GET") return listFiles(event);
   if (path === "/get-upload-url" && method === "POST") return getUploadUrl(event);
+  if (path === "/delete-file" && method === "DELETE") return deleteFile(event);
 
   return respond(404, { message: "Not found" });
 };
@@ -123,6 +124,30 @@ async function getUploadUrl(event) {
     return respond(500, { message: "Could not generate upload URL" });
   }
 }
+
+// DELETE FILE
+async function deleteFile(event) {
+  const username = verifyToken(event);
+  if (!username) return respond(401, { message: "Unauthorized" });
+
+  try {
+    const { key } = JSON.parse(event.body || "{}");
+    if (!key || !key.startsWith(`users/${username}/`)) {
+      return respond(403, { message: "Invalid file key" });
+    }
+
+    await s3.deleteObject({
+      Bucket: BUCKET_NAME,
+      Key: key
+    }).promise();
+
+    return respond(200, { message: "File deleted" });
+  } catch (err) {
+    console.error("Delete error:", err);
+    return respond(500, { message: "Failed to delete file" });
+  }
+}
+
 
 // Verify JWT
 function verifyToken(event) {
