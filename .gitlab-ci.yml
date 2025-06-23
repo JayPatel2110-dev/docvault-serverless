@@ -22,7 +22,9 @@ build_lambda:
 
 # STEP 2: Terraform Validate
 validate:
-  image: hashicorp/terraform:light
+  image: 
+    name:hashicorp/terraform:light
+    entrypoint: [""]
   stage: validate
   script:
     - cd $TF_ROOT
@@ -31,7 +33,9 @@ validate:
 
 # STEP 3: Terraform Plan
 plan:
-  image: hashicorp/terraform:light
+  image: 
+    name : hashicorp/terraform:light
+    entrypoint : [""]
   stage: plan
   script:
     - cd $TF_ROOT
@@ -41,7 +45,9 @@ plan:
 
 # STEP 4: Terraform Apply + Replace URLs + Upload Frontend
 apply:
-  image: hashicorp/terraform:light
+  image: 
+    name : hashicorp/terraform:light
+    entrypoint : [""]
   stage: apply
   script:
     - cd $TF_ROOT
