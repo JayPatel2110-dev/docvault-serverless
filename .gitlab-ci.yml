@@ -12,6 +12,7 @@ build_lambda:
   image: node:18
   stage: build_lambda
   script:
+    - apt-get update && apt-get install -y zip
     - cd lambda
     - npm install
     - zip -r ../lambda_function.zip .
