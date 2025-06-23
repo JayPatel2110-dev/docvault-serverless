@@ -10,25 +10,20 @@ const BUCKET_NAME = process.env.BUCKET_NAME;
 const JWT_SECRET = process.env.JWT_SECRET;
 
 exports.handler = async (event) => {
-  const path = event.rawPath || event.path; // fallback for legacy support
-  const method = event.requestContext?.http?.method || event.httpMethod;
+  const path = event.rawPath;
+  const method = event.requestContext?.http?.method;
 
-  try {
-    if (path === "/register" && method === "POST") return await register(event);
-    if (path === "/login" && method === "POST") return await login(event);
-    if (path === "/list-files" && method === "GET") return await listFiles(event);
-    if (path === "/get-upload-url" && method === "POST") return await getUploadUrl(event);
+  if (path === "/register" && method === "POST") return register(event);
+  if (path === "/login" && method === "POST") return login(event);
+  if (path === "/list-files" && method === "GET") return listFiles(event);
+  if (path === "/get-upload-url" && method === "POST") return getUploadUrl(event);
 
-    return respond(404, { message: "Not Found" });
-  } catch (err) {
-    console.error("Unhandled error:", err);
-    return respond(500, { message: "Internal Server Error" });
-  }
+  return respond(404, { message: "Not found" });
 };
 
 // REGISTER
 async function register(event) {
-  const { username, password } = safeJson(event.body);
+  const { username, password } = JSON.parse(event.body || "{}");
 
   if (!username || !password) {
     return respond(400, { message: "Username and password required" });
@@ -37,44 +32,44 @@ async function register(event) {
   const hashed = await bcrypt.hash(password, 10);
 
   try {
-    await dynamo.put({
-      TableName: USERS_TABLE,
-      Item: { username, passwordHash: hashed },
-      ConditionExpression: "attribute_not_exists(username)",
-    }).promise();
+    await dynamo
+      .put({
+        TableName: USERS_TABLE,
+        Item: { username, passwordHash: hashed },
+        ConditionExpression: "attribute_not_exists(username)",
+      })
+      .promise();
 
     return respond(201, { message: "User registered" });
   } catch (err) {
-    if (err.code === "ConditionalCheckFailedException") {
-      return respond(400, { message: "User already exists" });
-    }
-
     console.error("Register error:", err);
-    return respond(500, { message: "Error registering user" });
+    return respond(400, { message: "User already exists" });
   }
 }
 
 // LOGIN
 async function login(event) {
-  const { username, password } = safeJson(event.body);
+  const { username, password } = JSON.parse(event.body || "{}");
 
-  if (!username || !password) {
-    return respond(400, { message: "Username and password required" });
+  try {
+    const result = await dynamo
+      .get({
+        TableName: USERS_TABLE,
+        Key: { username },
+      })
+      .promise();
+
+    const user = result.Item;
+    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+      return respond(401, { message: "Invalid credentials" });
+    }
+
+    const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: "2h" });
+    return respond(200, { token });
+  } catch (err) {
+    console.error("Login error:", err);
+    return respond(500, { message: "Login failed" });
   }
-
-  const result = await dynamo.get({
-    TableName: USERS_TABLE,
-    Key: { username },
-  }).promise();
-
-  const user = result.Item;
-
-  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-    return respond(401, { message: "Invalid credentials" });
-  }
-
-  const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: "2h" });
-  return respond(200, { token });
 }
 
 // LIST FILES
@@ -85,8 +80,11 @@ async function listFiles(event) {
   const prefix = `users/${username}/`;
 
   try {
-    const s3Data = await s3.listObjectsV2({ Bucket: BUCKET_NAME, Prefix: prefix }).promise();
-    const files = (s3Data.Contents || []).map(item => ({
+    const s3Data = await s3
+      .listObjectsV2({ Bucket: BUCKET_NAME, Prefix: prefix })
+      .promise();
+
+    const files = (s3Data.Contents || []).map((item) => ({
       name: item.Key.split("/").pop(),
       url: s3.getSignedUrl("getObject", {
         Bucket: BUCKET_NAME,
@@ -107,50 +105,48 @@ async function getUploadUrl(event) {
   const username = verifyToken(event);
   if (!username) return respond(401, { message: "Unauthorized" });
 
-  const { filename } = safeJson(event.body);
-
+  const { filename } = JSON.parse(event.body || "{}");
   if (!filename) return respond(400, { message: "Filename required" });
 
   const objectKey = `users/${username}/${filename}`;
-  const uploadUrl = s3.getSignedUrl("putObject", {
-    Bucket: BUCKET_NAME,
-    Key: objectKey,
-    Expires: 3600,
-  });
-
-  return respond(200, { url: uploadUrl, key: objectKey });
-}
-
-// Helpers
-
-function verifyToken(event) {
-  const token = event.headers?.Authorization?.replace("Bearer ", "");
-  if (!token) return null;
 
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
-    return payload.username;
+    const uploadUrl = s3.getSignedUrl("putObject", {
+      Bucket: BUCKET_NAME,
+      Key: objectKey,
+      Expires: 3600,
+    });
+
+    return respond(200, { url: uploadUrl, key: objectKey });
   } catch (err) {
-    console.error("Invalid token:", err);
+    console.error("Upload URL error:", err);
+    return respond(500, { message: "Could not generate upload URL" });
+  }
+}
+
+// Verify JWT
+function verifyToken(event) {
+  const auth = event.headers?.Authorization || event.headers?.authorization;
+  if (!auth || !auth.startsWith("Bearer ")) return null;
+
+  const token = auth.split(" ")[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    return decoded.username;
+  } catch (err) {
+    console.error("JWT verification failed:", err.message);
     return null;
   }
 }
 
-function safeJson(jsonString) {
-  try {
-    return JSON.parse(jsonString || "{}");
-  } catch (e) {
-    return {};
-  }
-}
 
+// JSON response
 function respond(statusCode, body) {
   return {
     statusCode,
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Headers": "*",
-      "Access-Control-Allow-Methods": "*",
     },
     body: JSON.stringify(body),
   };

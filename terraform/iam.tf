@@ -30,16 +30,18 @@ resource "aws_iam_role_policy" "lambda_s3_dynamo_access" {
       {
         Effect = "Allow",
         Action = ["dynamodb:GetItem", "dynamodb:PutItem"],
-        Resource = "arn:aws:dynamodb:*:*:table/DocVaultUsers"
+        Resource = "arn:aws:dynamodb:${var.region}:${data.aws_caller_identity.current.account_id}:table/${var.dynamodb_table_name}"
       },
       {
         Effect = "Allow",
         Action = ["s3:ListBucket"],
-        Resource = "arn:aws:s3:::docvault-app"
+        Resource = "arn:aws:s3:::${var.s3_bucket_name}"
       },
       {
         Effect = "Allow",
-        Action = ["s3:GetObject"],
+        Action = ["s3:GetObject",
+                  "s3:PutObject",
+                  "s3:DeleteObject"],
         Resource = "arn:aws:s3:::docvault-app/users/*"
       }
     ]
