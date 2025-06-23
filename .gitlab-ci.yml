@@ -6,6 +6,7 @@ stages:
 
 variables:
   TF_ROOT: terraform
+  TF_VAR_s3_bucket_name: "static-doc-vault"  
 
 # STEP 1: Build & zip Lambda with Node.js
 build_lambda:
