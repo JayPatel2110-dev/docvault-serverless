@@ -47,3 +47,5 @@ resource "aws_iam_role_policy" "lambda_s3_dynamo_access" {
     ]
   })
 }
+
+data "aws_caller_identity" "current" {}
