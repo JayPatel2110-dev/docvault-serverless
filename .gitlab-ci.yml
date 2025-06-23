@@ -53,12 +53,12 @@ apply:
     entrypoint : [""]
   stage: apply
   script:
-    - apt-get update && apt-get install -y awscli
+    - apk add --no-cache bash curl jq aws-cli
     - cd $TF_ROOT
     - terraform init -input=false
     - cp ../lambda_function.zip .
     - terraform apply -auto-approve 
-    - export API_URL=$(terraform output -raw api_url)
+    - export API_URL=$(terraform output -raw api_base_url)
     - sed -i "s|%%API_URL%%|$API_URL|g" ../frontend/public/index.html
     - sed -i "s|%%API_URL%%|$API_URL|g" ../frontend/public/register.html
     - sed -i "s|%%API_URL%%|$API_URL|g" ../frontend/public/dashboard.html
