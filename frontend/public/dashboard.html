@@ -2,12 +2,11 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>DocVault Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="dashboard.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="dashboard.css" />
   <script src="https://unpkg.com/feather-icons"></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 
 <body>
@@ -23,6 +22,7 @@
     <main>
       <h2>Your Documents</h2>
       <div id="doc-container" class="doc-grid"></div>
+
       <form id="upload-form">
         <input type="file" id="file" />
         <button type="submit">Upload</button>
@@ -48,13 +48,27 @@
     async function loadDocuments() {
       try {
         const res = await fetch(`${API_BASE}/list-files`, {
-          headers: { Authorization: "Bearer " + token },
+          headers: {
+            Authorization: "Bearer " + token,
+          },
         });
 
-        const files = await res.json();
+        if (res.status === 401) {
+          alert("Session expired. Please log in again.");
+          localStorage.removeItem("token");
+          window.location.href = "index.html";
+          return;
+        }
+
+        const data = await res.json();
+
+        if (!Array.isArray(data)) {
+          throw new Error(data.message || "Unexpected response format");
+        }
+
         docContainer.innerHTML = "";
 
-        files.forEach(file => {
+        data.forEach(file => {
           const card = document.createElement("div");
           card.className = "card";
 
@@ -69,12 +83,15 @@
 
           card.innerHTML += `
             <a href="${file.url}" target="_blank" download>Download</a>
-            <button onclick="deleteFile('${file.key}')">Delete</button>`;
+            <button onclick="deleteFile('${file.key}')">Delete</button>
+          `;
 
           docContainer.appendChild(card);
         });
+
       } catch (err) {
         console.error("Failed to load documents", err);
+        alert("Could not load documents: " + err.message);
       }
     }
 
@@ -82,20 +99,24 @@
       const confirmed = confirm("Delete this file?");
       if (!confirmed) return;
 
-      const res = await fetch(`${API_BASE}/delete-file`, {
-        method: "DELETE",
-        headers: {
-          Authorization: "Bearer " + token,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ key: fileKey })
-      });
+      try {
+        const res = await fetch(`${API_BASE}/delete-file`, {
+          method: "DELETE",
+          headers: {
+            Authorization: "Bearer " + token,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ key: fileKey }),
+        });
 
-      if (res.ok) {
-        alert("File deleted");
-        loadDocuments();
-      } else {
-        alert("Failed to delete");
+        if (res.ok) {
+          alert("File deleted successfully.");
+          loadDocuments();
+        } else {
+          alert("Failed to delete the file.");
+        }
+      } catch (err) {
+        alert("Delete request failed: " + err.message);
       }
     }
 
@@ -110,16 +131,16 @@
           method: "POST",
           headers: {
             Authorization: "Bearer " + token,
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify({ filename: file.name })
+          body: JSON.stringify({ filename: file.name }),
         });
 
         const { url } = await urlRes.json();
 
         await fetch(url, {
           method: "PUT",
-          body: file
+          body: file,
         });
 
         alert("Upload successful!");
@@ -127,11 +148,13 @@
         loadDocuments();
       } catch (err) {
         console.error(err);
-        alert("Upload failed.");
+        alert("Upload failed: " + err.message);
       }
     });
 
     loadDocuments();
+    feather.replace();
   </script>
 </body>
+
 </html>
