@@ -1,48 +1,59 @@
 stages:
+  - build_lambda
+  - validate
   - plan
   - apply
 
 variables:
   TF_ROOT: terraform
-  AWS_REGION: ap-south-1
-  TF_VAR_bucket_name: static-doc-vault
 
-default:
-  image:
-    name: hashicorp/terraform:latest
-    entrypoint: [""]
-  before_script:
-    - apk add --no-cache bash curl jq zip aws-cli
-    - cd $TF_ROOT
-    - terraform init -input=false
-
-plan:
-  stage: plan
+# STEP 1: Build & zip Lambda with Node.js
+build_lambda:
+  image: node:18
+  stage: build_lambda
   script:
-    - cd ../lambda
+    - cd lambda
     - npm install
     - zip -r ../lambda_function.zip .
-    - cd ../$TF_ROOT
-    - terraform plan -out=tfplan -input=false
   artifacts:
     paths:
-      - tfplan
-      - api_url.txt
+      - lambda_function.zip
 
+# STEP 2: Terraform Validate
+validate:
+  image: hashicorp/terraform:light
+  stage: validate
+  script:
+    - cd $TF_ROOT
+    - terraform init -input=false
+    - terraform validate
+
+# STEP 3: Terraform Plan
+plan:
+  image: hashicorp/terraform:light
+  stage: plan
+  script:
+    - cd $TF_ROOT
+    - terraform init -input=false
+    - cp ../lambda_function.zip .
+    - terraform plan -out=tfplan
+
+# STEP 4: Terraform Apply + Replace URLs + Upload Frontend
 apply:
+  image: hashicorp/terraform:light
   stage: apply
   script:
-    - cd ../lambda
-    - npm install
-    - zip -r ../lambda_function.zip .
-    - cd ../$TF_ROOT
-    - terraform apply -auto-approve 
-    - export API_URL=$(terraform output -raw api_base_url)
+    - cd $TF_ROOT
+    - terraform init -input=false
+    - cp ../lambda_function.zip .
+    - terraform apply -auto-approve tfplan
+    - export API_URL=$(terraform output -raw api_url)
     - sed -i "s|%%API_URL%%|$API_URL|g" ../frontend/public/index.html
     - sed -i "s|%%API_URL%%|$API_URL|g" ../frontend/public/register.html
     - sed -i "s|%%API_URL%%|$API_URL|g" ../frontend/public/dashboard.html
-    - aws s3 cp ../frontend/public/index.html s3://$TF_VAR_bucket_name/index.html --content-type "text/html"
-    - aws s3 cp ../frontend/public/register.html s3://$TF_VAR_bucket_name/register.html --content-type "text/html"
-    - aws s3 cp ../frontend/public/dashboard.html s3://$TF_VAR_bucket_name/dashboard.html --content-type "text/html"
-    - aws s3 sync ../frontend/public/ s3://$TF_VAR_bucket_name/ --exclude "*.html" 
+    - aws s3 cp ../frontend/public/index.html s3://$TF_VAR_s3_bucket_name/index.html --content-type "text/html"
+    - aws s3 cp ../frontend/public/register.html s3://$TF_VAR_s3_bucket_name/register.html --content-type "text/html"
+    - aws s3 cp ../frontend/public/dashboard.html s3://$TF_VAR_s3_bucket_name/dashboard.html --content-type "text/html"
+  dependencies:
+    - build_lambda
   when: manual
