@@ -4,7 +4,7 @@ resource "aws_apigatewayv2_api" "doc_vault_api" {
 
   cors_configuration {
     allow_origins     = ["*"]
-    allow_methods     = ["GET", "POST", "OPTIONS"]
+    allow_methods     = ["GET", "POST", "OPTIONS","DELETE"]
     allow_headers     = ["Content-Type", "Authorization"]
     expose_headers    = ["*"]
     max_age           = 3600
@@ -19,11 +19,18 @@ resource "aws_apigatewayv2_integration" "lambda_integration" {
   payload_format_version = "2.0"
 }
 
-resource "aws_apigatewayv2_route" "routes" {
-  for_each   = toset(var.api_routes)
-  api_id     = aws_apigatewayv2_api.doc_vault_api.id
-  route_key  = "${each.key == "/list-files" ? "GET" : "POST"} ${each.value}"
-  target     = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+resource "aws_apigatewayv2_route" "api_routes" {
+  for_each = {
+    for route in var.api_routes : "${route}_method" =>
+    {
+      route_key = route == "/delete-file" ? "DELETE /delete-file" : (
+        route == "/list-files" ? "GET ${route}" :
+        "POST ${route}"
+      )
+    }
+  }
+  api_id    = aws_apigatewayv2_api.doc_vault_api.id
+  route_key = each.value.route_key
 }
 
 resource "aws_apigatewayv2_stage" "default" {
