@@ -20,7 +20,8 @@ plan:
   stage: plan
   script:
     - cd ../lambda
-    - zip -r lambda_function.zip .
+    - npm install
+    - zip -r ../lambda_function.zip .
     - cd ../$TF_ROOT
     - terraform plan -out=tfplan -input=false
   artifacts:
@@ -32,7 +33,8 @@ apply:
   stage: apply
   script:
     - cd ../lambda
-    - zip -r lambda_function.zip .
+    - npm install
+    - zip -r ../lambda_function.zip .
     - cd ../$TF_ROOT
     - terraform apply -auto-approve 
     - export API_URL=$(terraform output -raw api_base_url)
