@@ -23,7 +23,7 @@ build_lambda:
 # STEP 2: Terraform Validate
 validate:
   image: 
-    name:hashicorp/terraform:light
+    name : hashicorp/terraform:light
     entrypoint: [""]
   stage: validate
   script:
