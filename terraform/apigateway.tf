@@ -23,15 +23,16 @@ resource "aws_apigatewayv2_route" "api_routes" {
   for_each = {
     for route in var.api_routes : "${route}_method" =>
     {
-      route_key = route == "/delete-file" ? "DELETE /delete-file" : (
-        route == "/list-files" ? "GET ${route}" :
-        "POST ${route}"
-      )
+      route_key = route == "/delete-file" ? "DELETE /delete-file" :(
+                  route == "/list-files" ? "GET /list-files" :
+                  "POST ${route}")
     }
   }
   api_id    = aws_apigatewayv2_api.doc_vault_api.id
   route_key = each.value.route_key
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }
+
 
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.doc_vault_api.id
