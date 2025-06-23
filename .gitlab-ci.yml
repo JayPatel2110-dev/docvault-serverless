@@ -42,6 +42,9 @@ plan:
     - terraform init -input=false
     - cp ../lambda_function.zip .
     - terraform plan -out=tfplan
+  artifacts:
+    paths:
+      - $TF_ROOT/tfplan
 
 # STEP 4: Terraform Apply + Replace URLs + Upload Frontend
 apply:
