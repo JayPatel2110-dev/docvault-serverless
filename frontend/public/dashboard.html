@@ -21,7 +21,14 @@
 
     <main>
       <h2>Your Documents</h2>
-      <div id="docGrid" class="doc-grid"></div>
+
+      <!-- Upload form (initially hidden) -->
+      <form id="upload-form" class="upload-form">
+        <input type="file" id="file" required />
+        <button type="submit">Upload File</button>
+      </form>
+
+      <div id="doc-container" class="doc-grid"></div>
     </main>
 
     <footer>
@@ -31,14 +38,20 @@
 
   <script>
     const token = localStorage.getItem("token");
-    const API_BASE = "%%API_URL%%"
+    const API_BASE = "%%API_URL%%";
 
-    if (!token) {
-      alert("Please log in first");
-      window.location.href = "index.html";
-    }
+    // if (!token) {
+    //   alert("Please log in first");
+    //   window.location.href = "index.html";
+    // }
+
+    feather.replace();
 
     const docContainer = document.getElementById("doc-container");
+
+    document.getElementById("uploadBtn").addEventListener("click", () => {
+      document.getElementById("upload-form").classList.toggle("active");
+    });
 
     async function loadDocuments() {
       const res = await fetch(`${API_BASE}/list-files`, {
@@ -72,7 +85,6 @@
       if (!file) return;
 
       try {
-        // Step 1: Request signed upload URL
         const urlRes = await fetch(`${API_BASE}/get-upload-url`, {
           method: "POST",
           headers: {
@@ -84,7 +96,6 @@
 
         const { url } = await urlRes.json();
 
-        // Step 2: Upload file directly to S3
         await fetch(url, {
           method: "PUT",
           body: file
