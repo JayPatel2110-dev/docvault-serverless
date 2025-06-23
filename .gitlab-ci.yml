@@ -53,6 +53,7 @@ apply:
     entrypoint : [""]
   stage: apply
   script:
+    - apt-get update && apt-get install -y awscli
     - cd $TF_ROOT
     - terraform init -input=false
     - cp ../lambda_function.zip .
