@@ -19,7 +19,7 @@ variable "JWT_SECRET_KEY" {
 variable "api_routes" {
   description = "List of route paths for the unified Lambda"
   type        = list(string)
-  default     = ["/register", "/login", "/list-files", "/get-upload-url", "delete-file"]
+  default     = ["/register", "/login", "/list-files", "/get-upload-url", "/delete-file"]
 }
 
 variable "region" {
