@@ -42,7 +42,7 @@ resource "aws_iam_role_policy" "lambda_s3_dynamo_access" {
         Action = ["s3:GetObject",
                   "s3:PutObject",
                   "s3:DeleteObject"],
-        Resource = "arn:aws:s3:::docvault-app/users/*"
+        Resource = "arn:aws:s3:::${var.s3_bucket_name}/users/*"
       }
     ]
   })
