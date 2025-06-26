@@ -42,9 +42,12 @@ plan:
     entrypoint : [""]
   stage: plan
   script:
-    - terraform -chdir=$TF_ROOT init -input=false
-    - cp lambda_function.zip $TF_ROOT/
-    - terraform -chdir=$TF_ROOT plan -out=tfplan
+    - cd $TF_ROOT
+    - terraform init -input=false
+    - cp ../lambda_function.zip .
+    - terraform init -input=false
+    - cp ../lambda_function.zip .
+    - terraform plan -out=tfplan 
   artifacts:
     paths:
       - $TF_ROOT/tfplan
@@ -58,15 +61,15 @@ apply:
   script:
     - apk add --no-cache bash curl jq aws-cli
     - terraform -chdir=$TF_ROOT init -input=false
-    - cp lambda_function.zip $TF_ROOT/
-    - terraform -chdir=$TF_ROOT apply -auto-approve tfplan
-    - export API_URL=$(terraform -chdir=$TF_ROOT output -raw api_base_url)
-    - sed -i "s|%%API_URL%%|$API_URL|g" frontend/public/index.html
-    - sed -i "s|%%API_URL%%|$API_URL|g" frontend/public/register.html
-    - sed -i "s|%%API_URL%%|$API_URL|g" frontend/public/dashboard.html
-    - aws s3 cp frontend/public/index.html s3://$TF_VAR_s3_bucket_name/index.html --content-type "text/html"
-    - aws s3 cp frontend/public/register.html s3://$TF_VAR_s3_bucket_name/register.html --content-type "text/html"
-    - aws s3 cp frontend/public/dashboard.html s3://$TF_VAR_s3_bucket_name/dashboard.html --content-type "text/html"
+    - cp ../lambda_function.zip .
+    - terraform apply -auto-approve 
+    - export API_URL=$(terraform output -raw api_base_url)
+    - sed -i "s|%%API_URL%%|$API_URL|g" ../frontend/public/index.html
+    - sed -i "s|%%API_URL%%|$API_URL|g" ../frontend/public/register.html
+    - sed -i "s|%%API_URL%%|$API_URL|g" ../frontend/public/dashboard.html
+    - aws s3 cp ../frontend/public/index.html s3://$TF_VAR_s3_bucket_name/index.html --content-type "text/html"
+    - aws s3 cp ../frontend/public/register.html s3://$TF_VAR_s3_bucket_name/register.html --content-type "text/html"
+    - aws s3 cp ../frontend/public/dashboard.html s3://$TF_VAR_s3_bucket_name/dashboard.html --content-type "text/html"
   dependencies:
     - build_lambda
   when: manual
