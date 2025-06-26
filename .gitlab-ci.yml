@@ -42,12 +42,9 @@ plan:
     entrypoint : [""]
   stage: plan
   script:
-    - cd $TF_ROOT
-    - terraform init -input=false
-    - cp ../lambda_function.zip .
-    - terraform init -input=false
-    - cp ../lambda_function.zip .
-    - terraform plan -out=tfplan 
+    - terraform -chdir=$TF_ROOT init -input=false
+    - cp lambda_function.zip $TF_ROOT/
+    - terraform -chdir=$TF_ROOT plan -out=tfplan
   artifacts:
     paths:
       - $TF_ROOT/tfplan
