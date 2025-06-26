@@ -60,7 +60,8 @@ apply:
   stage: apply
   script:
     - apk add --no-cache bash curl jq aws-cli
-    - terraform -chdir=$TF_ROOT init -input=false
+    - cd $TF_ROOT
+    - terraform init -input=false
     - cp ../lambda_function.zip .
     - terraform apply -auto-approve 
     - export API_URL=$(terraform output -raw api_base_url)
@@ -73,6 +74,3 @@ apply:
   dependencies:
     - build_lambda
   when: manual
-  artifacts:
-    paths:
-      - $TF_ROOT/tfplan
