@@ -41,7 +41,14 @@ plan:
     - cd $TF_ROOT
     - terraform init -input=false
     - cp ../lambda_function.zip .
-    - terraform plan -out=tfplan
+    - terraform init -input=false
+    - cp ../lambda_function.zip .
+    - terraform plan -out=tfplan \
+        -var="s3_bucket_name=$TF_VAR_s3_bucket_name" \
+        -var="dynamodb_table_name=$TF_VAR_dynamodb_table_name" \
+        -var="JWT_SECRET_KEY=$TF_VAR_JWT_SECRET_KEY" \
+        -var='api_routes=$TF_VAR_api_routes' \
+        -var="region=$TF_VAR_region"
   artifacts:
     paths:
       - $TF_ROOT/tfplan
@@ -57,7 +64,12 @@ apply:
     - cd $TF_ROOT
     - terraform init -input=false
     - cp ../lambda_function.zip .
-    - terraform apply -auto-approve 
+    - terraform apply -auto-approve \
+        -var="s3_bucket_name=$TF_VAR_s3_bucket_name" \
+        -var="dynamodb_table_name=$TF_VAR_dynamodb_table_name" \
+        -var="JWT_SECRET_KEY=$TF_VAR_JWT_SECRET_KEY" \
+        -var='api_routes=$TF_VAR_api_routes' \
+        -var="region=$TF_VAR_region" 
     - export API_URL=$(terraform output -raw api_base_url)
     - sed -i "s|%%API_URL%%|$API_URL|g" ../frontend/public/index.html
     - sed -i "s|%%API_URL%%|$API_URL|g" ../frontend/public/register.html
