@@ -1,20 +1,100 @@
-# 📦 DocVault - Secure Document Vault
+# 📦 DocVault — Secure Serverless Document Vault
 
-DocVault is a simple web-based document management system built using AWS (S3, Lambda, API Gateway, DynamoDB) and deployed via GitLab CI/CD using Terraform.
+DocVault is a fully serverless document management system built on AWS, designed with a **DevOps-first mindset**.  
+The project emphasizes CI/CD-driven delivery, Infrastructure as Code, secure secret handling, and a clean separation between deployment-time and runtime concerns.
+
+It demonstrates how to design, deploy, and operate a production-style serverless system without managing servers.
 
 ---
 
-## 🔧 Features
-- User registration and login with JWT authentication
-- Secure document uploads to S3 (presigned URLs)
-- Document listing with download & delete options
-- Responsive frontend hosted on S3 static website
-- Fully serverless architecture
+## 🏗 DevOps & System Architecture
+
+![DocVault DevOps Architecture](docs/docvault-devops-architecture.png)
+
+The architecture highlights the **CI/CD and infrastructure workflow as the primary focus**, with the runtime serverless components shown at a high level to illustrate request flow, security boundaries, and managed AWS services.
+
+### Key Design Principles
+
+- CI/CD-driven infrastructure provisioning and deployment
+- Terraform-based Infrastructure as Code with remote state and locking
+- Clear deployment boundary between build-time and runtime
+- Fully serverless runtime (no EC2 or container management)
+- Least-privilege IAM access and secure secret injection
+
+---
+
+## 🔁 CI/CD & Delivery Pipeline
+
+The system is deployed using **GitLab CI/CD**, following a controlled and reproducible workflow:
+
+1. **Source Control**
+   - Developer pushes code to Git (GitLab/GitHub)
+
+2. **CI/CD Pipeline**
+   - Build Lambda artifacts
+   - Terraform validate
+   - Terraform plan (review stage)
+   - Terraform apply (controlled execution)
+   - Sync static frontend assets to S3
+
+3. **Infrastructure Provisioning**
+   - Terraform provisions AWS resources
+   - Remote backend uses S3 for state storage and DynamoDB for state locking
+   - Environment-specific configuration injected via CI/CD variables
+
+> Terraform state locking prevents concurrent applies and ensures safe collaboration.
+
+---
+
+## ☁️ Runtime Architecture (Serverless)
+
+***Frontend***
+
+- Static web application hosted on Amazon S3
+- Accessed by users over HTTPS
+
+***Backend***
+
+- Amazon API Gateway routes API requests
+- AWS Lambda handles authentication and business logic
+- Lambda assumes a least-privilege IAM role
+
+***Storage***
+
+- Amazon DynamoDB stores user and metadata
+- Private Amazon S3 bucket stores documents
+- Presigned URLs enable direct client uploads/downloads without exposing the bucket
+
+---
+
+## 🔐 Security Highlights
+
+- JWT-based authentication for user access
+- Secrets injected via CI/CD environment variables (no secrets in code)
+- IAM least-privilege roles for Lambda and CI/CD
+- Private S3 buckets with controlled access via presigned URLs
+- No long-lived credentials committed to source control
+
+---
+
+## ⚙️ Configuration & Variables
+
+Infrastructure configuration is managed using Terraform variables.
+
+Sensitive values are **required at runtime** and are provided securely via CI/CD:
+
+- `TF_VAR_s3_bucket_name`
+- `TF_VAR_dynamodb_table_name`
+- `TF_VAR_JWT_SECRET_KEY`
+- `TF_VAR_region`
+
+Terraform automatically loads these values from the environment.
 
 ---
 
 ## 📂 Project Structure
-```
+
+```code
 .
 ├── frontend/
 │   └── public/
@@ -31,74 +111,29 @@ DocVault is a simple web-based document management system built using AWS (S3, L
 │   ├── outputs.tf
 │   └── backend.tf
 ├── .gitlab-ci.yml
+├── docs/
+│   └── docvault-devops-architecture.png
 └── README.md
 ```
 
 ---
 
-## 🚀 Deployment (via GitLab CI/CD)
+## 🧭 Future Enhancements
 
-Ensure you set the following GitLab CI/CD variables:
-
-### Required GitLab Variables:
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
-- `AWS_DEFAULT_REGION`
-- `TF_VAR_s3_bucket_name` (e.g., `static-doc-vault`)
-- `TF_VAR_dynamodb_table_name` (e.g., `doc_vault_users`)
-- `TF_VAR_JWT_SECRET_KEY` (e.g., `your-very-secure-jwt-key`)
-- `TF_VAR_api_routes` (e.g., `["/register", "/login", "/list-files", "/get-upload-url", "/delete-file"]`)
-- `TF_VAR_region` (e.g., `ap-south-1`)
-
-These GitLab variables are passed to Terraform and override the defaults defined in `variables.tf`.
-
-### `.gitlab-ci.yml` Pipeline Overview:
-1. **build_lambda**: Zips your Node.js Lambda function
-2. **validate**: Runs `terraform validate`
-3. **plan**: Executes `terraform plan` with variables
-4. **apply**: Applies infrastructure, replaces frontend API URLs, and uploads HTML to S3
-
----
-
-## 🌐 Setting Up Terraform Backend (`terraform/backend.tf`)
-Create an S3 bucket and DynamoDB table manually or via Terraform to store the Terraform state.
-
-```hcl
-terraform {
-  backend "s3" {
-    bucket         = "your-tf-state-bucket"
-    key            = "docvault/terraform.tfstate"
-    region         = "ap-south-1"
-    dynamodb_table = "terraform-locks"
-    encrypt        = true
-  }
-}
-```
-
-### Setup Backend:
-```bash
-aws s3api create-bucket --bucket your-tf-state-bucket --region ap-south-1
-aws dynamodb create-table \
-  --table-name terraform-locks \
-  --attribute-definitions AttributeName=LockID,AttributeType=S \
-  --key-schema AttributeName=LockID,KeyType=HASH \
-  --billing-mode PAY_PER_REQUEST
-```
-
----
-
-## ✅ TODO / Future Work
-- Forgot password via email/OTP
-- Multi-user file sharing
-- File preview enhancements
-- CI enhancements and automated testing
+- Password reset via email/OTP
+- Secure file sharing between users
+- File preview support
+- CI/CD pipeline enhancements and automated tests
+- Optional OIDC-based authentication for CI/CD → AWS access
 
 ---
 
 ## 📝 License
+
 MIT License
 
 ---
 
 ## 👨‍💻 Author
+
 Built by **Jay Patel**

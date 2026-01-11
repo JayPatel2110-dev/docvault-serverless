@@ -1,19 +1,19 @@
 variable "s3_bucket_name" {
-    description = "The name of the S3 bucket to be created for document storage."
-    type        = string
-    default     = "static-doc-vault"
+  description = "The name of the S3 bucket to be created for document storage."
+  type        = string
+  default     = "static-doc-vault"
 }
 
 variable "dynamodb_table_name" {
-    description = "The name of the DynamoDB table to be created for user data."
-    type        = string
-    default     = "doc_vault_users"
+  description = "The name of the DynamoDB table to be created for user data."
+  type        = string
+  default     = "doc_vault_users"
 }
 
 variable "JWT_SECRET_KEY" {
-    description = "The secret key used for signing JWT tokens."
-    type        = string
-    default     = "BNSJDJKFJDSKJFDSKFJDSKJFDSKJFDSKJFDSKJFDSKJFDJKF" 
+  description = "The secret key used for signing JWT tokens."
+  type        = string
+  sensitive   = true
 }
 
 variable "api_routes" {
@@ -23,7 +23,7 @@ variable "api_routes" {
 }
 
 variable "region" {
-    description = "The AWS region where resources will be created."
-    type        = string
-    default     = "ap-south-1"
+  description = "The AWS region where resources will be created."
+  type        = string
+  default     = "ap-south-1"
 }
